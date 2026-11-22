@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ludo Royal - Fixed Music</title>
+<style>
+body{margin:0;background:#0b2a6b;color:#fff;font-family:Arial;text-align:center;padding:8px}
+h1{color:gold;margin:2px;font-size:26px}
+.wrap{width:min(96vw,430px);margin:auto}
+.row{display:flex;justify-content:space-between;gap:8px;margin:6px 0}
+.pod{flex:1;background:linear-gradient(#1a4fc0,#0a2a7a);border:3px solid #ffe27a;border-radius:12px;padding:6px;display:flex;align-items:center;gap:6px;justify-content:center}
+.pod.off{opacity:.55}.pod.on{outline:3px solid #fff;box-shadow:0 0 14px gold}.pod.hide{visibility:hidden}
+.pawn{width:28px;height:34px;background:#fff;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;position:relative;flex-shrink:0;border:2px solid #000;display:flex;align-items:center;justify-content:center}
+.pawn:after{content:'';width:14px;height:14px;background:var(--c);border-radius:50%;border:2px solid #fff}
+.dbox{width:58px;height:52px;background:#ffd7e0;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid #fff;flex-shrink:0}
+.dbox.roll{animation:sh .12s infinite}@keyframes sh{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
+.die{width:34px;height:34px;background:#fff;border-radius:7px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:3px}
+.pip{width:7px;height:7px;background:#111;border-radius:50%;place-self:center}.pip.h{visibility:hidden}
+.info{font-size:10px;text-align:left;line-height:1.3}.info b{font-size:13px}.info span{color:#ffe27a}
+#boardBox{width:100%;background:#fff;position:relative;aspect-ratio:1;border:4px solid #fff;overflow:hidden}
+#board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr)}
+.cell{border:.5px solid #bbb;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:#333}
+#center{position:absolute;left:40%;top:40%;width:20%;height:20%;z-index:3;overflow:hidden}
+#center .tri{position:absolute;width:100%;height:100%}
+#center .tR{clip-path:polygon(0 0,100% 50%,0 100%);background:#e62e2e}
+#center .tG{clip-path:polygon(0 0,100% 0,50% 50%);background:#1da851}
+#center .tY{clip-path:polygon(100% 0,100% 100%,50% 50%);background:#ffcc00}
+#center .tB{clip-path:polygon(0 100%,100% 100%,50% 50%);background:#2196f3}
+.token{position:absolute;width:4.6%;height:5.4%;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1.5px solid #fff;box-shadow:0 2px 3px #000;z-index:5;transition:all .4s;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.token:after{content:'';width:52%;height:52%;background:#fff;border-radius:50%}
+.token.go{outline:2.5px solid #fff;transform:rotate(-45deg) scale(1.2)}
+.score{display:flex;gap:5px;justify-content:center;margin:5px 0}
+.score div{padding:6px 4px;border-radius:10px;width:24%;font-weight:bold;font-size:11px;line-height:1.2}
+.score span{font-weight:normal;font-size:10px;display:block}
+.red{background:#e62e2e}.green{background:#1da851}.blue{background:#2196f3}.yellow{background:#ffcc00;color:#000}
+.on2{outline:3px solid gold}#msg{color:#ffe27a;font-weight:bold;min-height:20px;margin-top:6px}
+button{border:0;border-radius:20px;padding:8px 14px;font-weight:bold;cursor:pointer;margin:3px}
+.ov{position:fixed;inset:0;background:rgba(10,0,30,.93);z-index:99;display:flex;align-items:center;justify-content:center;padding:16px}
+.ov.hide{display:none}.card{background:#fff;color:#222;border-radius:16px;padding:16px;width:min(92vw,340px)}
+.card input{width:100%;padding:10px;border-radius:10px;border:2px solid #c9a227;text-align:center;margin:8px 0}
+.big{width:100%;padding:12px;border-radius:20px;font-weight:bold;margin:4px 0}.gold{background:#c9a227}.dark{background:#2a0a4a;color:#fff}
+.opt{background:#eee;border:2px solid #c9a227;padding:9px;border-radius:10px;font-weight:bold;margin:3px}.opt.sel{background:#c9a227}
+.lab{position:absolute;font-weight:bold;font-size:11px;z-index:4;background:rgba(255,255,255,.9);padding:2px 4px;border-radius:6px;color:#000}
+.modeBtn{width:48%;padding:10px;border-radius:12px;font-weight:bold;border:3px solid #c9a227;background:#eee}
+.modeBtn.sel{background:#c9a227;color:#fff}
+</style>
+<script>
+// FIRST SCRIPT - defined BEFORE body so buttons can NEVER say "not a function"
+window._musicOn = true;
+window._soundOn = true;
+window._mode = 'pass';
+window._pcount = 4;
+window.toggleMusic = function(){
+  try{
+    window._musicOn = !window._musicOn;
+    var b = document.getElementById('musicBtn');
+    if(b) b.innerText = window._musicOn ? 'MUSIC ON' : 'MUSIC OFF';
+    if(!window._musicOn && window._musicTimer){ clearInterval(window._musicTimer); window._musicTimer = null; }
+    if(window._musicOn && window.startMusicNow) window.startMusicNow();
+  }catch(e){}
+};
+window.toggleSound = function(){
+  try{
+    window._soundOn = !window._soundOn;
+    var b = document.getElementById('soundBtn');
+    if(b) b.innerText = window._soundOn ? 'SOUND ON' : 'SOUND OFF';
+  }catch(e){}
+};
+window.setMode = function(m){
+  try{
+    window._mode = m;
+    var a = document.getElementById('modePass'); if(a) a.classList.toggle('sel', m=='pass');
+    var b = document.getElementById('modeCpu'); if(b) b.classList.toggle('sel', m=='cpu');
+    var info = document.getElementById('modeInfo');
+    if(info) info.innerText = m=='cpu' ? 'Vs Computer: You are JOSEPH. Computer plays the rest.' : 'Pass and Play: You all tap your own dice';
+    var n = window._pcount || 4;
+    var ci = document.getElementById('countInfo');
+    if(ci){
+      if(m=='cpu') ci.innerText = n==2 ? '2 Players: YOU vs 1 Computer' : n==3 ? '3 Players: YOU vs 2 Computers' : '4 Players: YOU vs 3 Computers';
+      else ci.innerText = n==2 ? '2 Players: JOSEPH vs PEEZ' : n==3 ? '3 Players: JOSEPH, MENSAH, THEO' : '4 Players: JOSEPH, MENSAH, THEO, PEEZ';
+    }
+  }catch(e){}
+};
+window.setCount = function(n){
+  try{
+    window._pcount = n;
+    document.getElementById('opt2').classList.remove('sel');
+    document.getElementById('opt3').classList.remove('sel');
+    document.getElementById('opt4').classList.remove('sel');
+    document.getElementById('opt'+n).classList.add('sel');
+    window.setMode(window._mode || 'pass');
+  }catch(e){}
+};
+</script>
+</head>
+<body>
+<h1>👑 LUDO ROYAL 🎵</h1>
+<div><span style="background:#fff;color:#222;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold" id="roomLabel">No Room</span> <button onclick="window.showRoom()">🏠 ROOM</button><br>
+<button id="soundBtn" onclick="window.toggleSound()">🔊 SOUND ON</button>
+<button id="musicBtn" onclick="window.toggleMusic()">🎵 MUSIC ON</button>
+</div>
+<div class="score">
+<div class="red on2" id="p0">JOSEPH<br><span id="s0">4 in base</span></div>
+<div class="blue" id="p3">MENSAH<br><span id="s3">4 in base</span></div>
+<div class="green" id="p1">THEO<br><span id="s1">4 in base</span></div>
+<div class="yellow" id="p2">PEEZ<br><span id="s2">4 in base</span></div>
+</div>
+<div class="wrap">
+<div class="row">
+<div class="pod on" id="pod0"><div class="pawn" style="--c:#e62e2e"></div><div class="dbox" id="d0" onclick="window.roll(0)"><div class="die" id="die0"></div></div><div class="info"><b>JOSEPH</b><br><span id="n0">Tap to roll</span><br>Player 1</div></div>
+<div class="pod off" id="pod1"><div class="info" style="text-align:right"><b>THEO</b><br><span id="n1">Wait</span><br>Player 3</div><div class="dbox" id="d1" onclick="window.roll(1)"><div class="die" id="die1"></div></div><div class="pawn" style="--c:#1da851"></div></div>
+</div>
+<div id="boardBox"><div id="board"></div>
+<div class="lab" style="left:2px;top:48%;transform:rotate(-90deg)">Player 1</div>
+<div class="lab" style="right:2px;top:48%;transform:rotate(90deg)">Player 4</div>
+<div class="lab" style="left:44%;top:1px">Player 3</div>
+<div class="lab" style="left:44%;bottom:1px">Player 2</div>
+<div id="center"><div class="tri tR"></div><div class="tri tG"></div><div class="tri tY"></div><div class="tri tB"></div></div></div>
+<div class="row">
+<div class="pod off" id="pod3"><div class="pawn" style="--c:#2196f3"></div><div class="dbox" id="d3" onclick="window.roll(3)"><div class="die" id="die3"></div></div><div class="info"><b>MENSAH</b><br><span id="n3">Wait</span><br>Player 2</div></div>
+<div class="pod off" id="pod2"><div class="info" style="text-align:right"><b>PEEZ</b><br><span id="n2">Wait</span><br>Player 4</div><div class="dbox" id="d2" onclick="window.roll(2)"><div class="die" id="die2"></div></div><div class="pawn" style="--c:#ffcc00"></div></div>
+</div>
+</div>
+<div id="msg">Pick players to start</div>
+<button onclick="location.reload()">RESTART</button>
+<div id="startOverlay" class="ov"><div class="card"><h2>👑 LUDO ROYAL 🎵</h2>
+<p><b>Who do you want to play?</b></p>
+<div style="display:flex;gap:6px;justify-content:center">
+<button class="modeBtn sel" id="modePass" onclick="window.setMode('pass')">👥 PASS &amp; PLAY<br><span style="font-size:11px;font-weight:normal">Friends on 1 phone</span></button>
+<button class="modeBtn" id="modeCpu" onclick="window.setMode('cpu')">🤖 VS COMPUTER<br><span style="font-size:11px;font-weight:normal">You vs Computer</span></button>
+</div>
+<p id="modeInfo" style="font-size:12px;color:#555">Pass and Play: You all tap your own dice</p>
+<p>How many players?</p>
+<button class="opt" id="opt2" onclick="window.setCount(2)">2 Players</button>
+<button class="opt" id="opt3" onclick="window.setCount(3)">3 Players</button>
+<button class="opt sel" id="opt4" onclick="window.setCount(4)">4 Players</button>
+<p id="countInfo">4 Players: JOSEPH, MENSAH, THEO, PEEZ</p>
+<input id="myName" placeholder="Your name (optional)">
+<button class="big gold" onclick="window.startGame()">▶ START GAME 🎵</button>
+<button class="big dark" onclick="window.showRoomFromStart()">🏠 CREATE / JOIN ROOM</button>
+</div></div>
+<div id="roomOverlay" class="ov hide"><div class="card"><h2>🏠 ROOM</h2>
+<button class="big gold" onclick="window.createRoom()">➕ CREATE ROOM</button>
+<div id="createdBox" style="display:none;background:#fffbe6;padding:10px;border-radius:10px"><div>Your Code:</div><div id="roomCodeBig" style="font-size:30px;font-weight:bold;letter-spacing:5px">----</div><button class="big dark" onclick="window.copyRoom()">📋 COPY</button></div>
+<input id="joinCode" placeholder="Enter Code e.g. 4821" maxlength="4">
+<button class="big dark" onclick="window.joinRoom()">➡ JOIN ROOM</button>
+<button class="big" onclick="window.closeRoom()">⬅ BACK</button><p id="roomMsg" style="color:#b00"></p></div></div>
+<div id="winOverlay" class="ov hide"><div class="card" style="background:linear-gradient(#ffe27a,#c9a227)"><h2 id="winTitle">JOSEPH WINS!</h2><p id="winSub">CHAMPION</p><div style="font-size:40px">👑</div><button class="big gold" onclick="location.reload()">🔄 PLAY AGAIN</button><button class="big" onclick="document.getElementById('winOverlay').classList.add('hide')">👀 VIEW BOARD</button></div></div>
+<script>
+var names=['JOSEPH','THEO','PEEZ','MENSAH'];
+var colors=['#e62e2e','#1da851','#ffcc00','#2196f3'];
+var startIdx=[0,13,26,39];
+var path=[[6,1],[6,2],[6,3],[6,4],[6,5],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],[0,8],[1,8],[2,8],[3,8],[4,8],[5,8],[6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],[8,14],[8,13],[8,12],[8,11],[8,10],[8,9],[9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]];
+var homeArr=[[[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],[[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],[[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]],[[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]]];
+var basePos=[[[2,2],[2,3],[3,2],[3,3]],[[2,11],[2,12],[3,11],[3,12]],[[11,11],[11,12],[12,11],[12,12]],[[11,2],[11,3],[12,2],[12,3]]];
+var safe={0:1,8:1,13:1,21:1,26:1,34:1,39:1,47:1};
+var pos=[[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]];
+var tokens=[],turn=0,dice=0,waiting=false,movable=[],rolling=false,started=false,active=[0,3,1,2],room='',actx=null,pips={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+var EN=50,HS=51,FIN=56;
+var human=0;
+var melodyIdx=0;
+var melody=[523,659,784,659,523,659,784,1046,784,659,523,392,523,659,784,659,0,523,659,784,880,784,659,523,0,392,523,659,784,1046,0,784];
+function ensure(){try{if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();if(actx.state=='suspended')actx.resume();}catch(e){}}
+function playNote(freq,dur,vol,type){try{if(!actx)return;var t=actx.currentTime;var o=actx.createOscillator(),g=actx.createGain();o.type=type||'triangle';o.frequency.value=freq;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol||.12,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+dur+.05);}catch(e){}}
+window.startMusicNow=function(){try{if(window._musicTimer)return;melodyIdx=0;window._musicTimer=setInterval(function(){try{if(!window._musicOn||!actx)return;var f=melody[melodyIdx%melody.length];melodyIdx++;if(f>0)playNote(f,.35,.08,'triangle');}catch(e){}},380);}catch(e){}};
+function playWinMusic(){try{if(!window._musicOn)return;var notes=[523,659,784,1046,784,1046];var i=0;var iv=setInterval(function(){if(i>=notes.length){clearInterval(iv);return;}playNote(notes[i],.4,.15,'triangle');i++;},300);}catch(e){}}
+function isCpu(p){return (window._mode=='cpu') && p!=human;}
+window.startGame=function(){try{ensure();var c=document.getElementById('myName').value.trim().toUpperCase();if(c)names[0]=c;document.getElementById('startOverlay').classList.add('hide');started=true;var pcount=window._pcount||4;if(pcount==2)active=[0,2];if(pcount==3)active=[0,3,1];if(pcount==4)active=[0,3,1,2];if(window._mode=='cpu'){for(var i=0;i<active.length;i++){if(active[i]!=human)names[active[i]]=names[active[i]]+' ROBOT';}document.getElementById('roomLabel').innerText='Vs Computer';}for(var p=0;p<4;p++){if(active.indexOf(p)==-1){document.getElementById('p'+p).style.visibility='hidden';document.getElementById('pod'+p).classList.add('hide');for(var k=0;k<4;k++)tokens[p][k].style.display='none';}}turn=active[0];updDice();updStat();if(window._musicOn)window.startMusicNow();if(isCpu(turn))cpuTurn();else document.getElementById('msg').innerText=names[turn]+' turn - Tap YOUR corner dice';beep(600,.15);}catch(e){}};
+function cpuTurn(){if(!started)return;document.getElementById('msg').innerText=names[turn]+' is thinking...';setTimeout(function(){if(started&&!waiting&&!rolling)window.roll(turn);},1000);}
+function cpuPick(){if(movable.length==0)return;var best=movable[0],bestScore=-999;for(var i=0;i<movable.length;i++){var k=movable[i],sc=0;if(pos[turn][k]==-1)sc=50;var np=pos[turn][k]==-1?0:pos[turn][k]+dice;if(np>=FIN)sc=100;if(np<=EN){var gi=(startIdx[turn]+np)%52;if(!safe[gi]){for(var op=0;op<4;op++){if(op==turn)continue;for(var ok=0;ok<4;ok++){if(pos[op][ok]>=0&&pos[op][ok]<=EN&&((startIdx[op]+pos[op][ok])%52)==gi)sc+=80;}}}}sc+=np;if(sc>bestScore){bestScore=sc;best=k;}}setTimeout(function(){doMove(best);},700);}
+window.showRoom=function(){document.getElementById('roomOverlay').classList.remove('hide');};
+window.showRoomFromStart=function(){document.getElementById('startOverlay').classList.add('hide');window.showRoom();};
+window.closeRoom=function(){document.getElementById('roomOverlay').classList.add('hide');if(!started)document.getElementById('startOverlay').classList.remove('hide');};
+window.createRoom=function(){room=String(Math.floor(1000+Math.random()*9000));document.getElementById('createdBox').style.display='block';document.getElementById('roomCodeBig').innerText=room;document.getElementById('roomLabel').innerText='Room: '+room;document.getElementById('roomMsg').innerText='Send code '+room;};
+window.copyRoom=function(){if(navigator.clipboard)navigator.clipboard.writeText(room);document.getElementById('roomMsg').innerText='Copied: '+room;};
+window.joinRoom=function(){var c=document.getElementById('joinCode').value.trim();if(c.length!=4){document.getElementById('roomMsg').innerText='Enter 4-digit code';return;}room=c;document.getElementById('roomLabel').innerText='Room: '+c+' Joined!';document.getElementById('roomOverlay').classList.add('hide');document.getElementById('startOverlay').classList.remove('hide');};
+document.addEventListener('click',ensure);
+function beep(f,d){try{if(!window._soundOn)return;ensure();if(!actx)return;var t=actx.currentTime;var o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d+.05);}catch(e){}}
+function draw(p,v){var el=document.getElementById('die'+p);el.innerHTML='';for(var i=0;i<9;i++){var s=document.createElement('div');s.className='pip'+(pips[v].indexOf(i)==-1?' h':'');el.appendChild(s);}document.getElementById('n'+p).innerText='Rolled '+v;}
+var board=document.getElementById('board'),wrap=document.getElementById('boardBox');
+for(var r=0;r<15;r++){for(var c=0;c<15;c++){var d=document.createElement('div');d.className='cell';if(r<6&&c<6)d.style.background='#e62e2e';if(r<6&&c>8)d.style.background='#1da851';if(r>8&&c<6)d.style.background='#2196f3';if(r>8&&c>8)d.style.background='#ffcc00';if(r>=1&&r<=4&&c>=1&&c<=4)d.style.background='#fff';if(r>=1&&r<=4&&c>=10&&c<=13)d.style.background='#fff';if(r>=10&&r<=13&&c>=1&&c<=4)d.style.background='#fff';if(r>=10&&r<=13&&c>=10&&c<=13)d.style.background='#fff';if(r==7&&c>=1&&c<=5)d.style.background='#e62e2e';if(c==7&&r>=1&&r<=5)d.style.background='#1da851';if(r==7&&c>=9&&c<=13)d.style.background='#ffcc00';if(c==7&&r>=9&&r<=13)d.style.background='#2196f3';if(r==6&&c==1)d.style.background='#e62e2e';if(r==1&&c==8)d.style.background='#1da851';if(r==8&&c==13)d.style.background='#ffcc00';if(r==13&&c==6)d.style.background='#2196f3';board.appendChild(d);}}
+function setCell(r,c,txt){var cell=board.children[r*15+c];if(cell){cell.innerText=txt;}}
+setCell(0,7,'↓');setCell(14,7,'↑');setCell(7,0,'→');setCell(7,14,'←');
+for(var si=0;si<52;si++){if(safe[si]){var cell=board.children[path[si][0]*15+path[si][1]];if(cell){cell.innerText='☆';}}}
+for(var pp=0;pp<4;pp++){tokens[pp]=[];for(var kk=0;kk<4;kk++){ (function(a,b){var t=document.createElement('div');t.className='token';t.style.background=colors[a];t.onclick=function(){if(waiting&&turn==a&&!isCpu(a)&&movable.indexOf(b)!=-1)doMove(b);};wrap.appendChild(t);tokens[a].push(t);updOne(a,b);})(pp,kk);}}
+function getRC(p,s,k){if(s==-1)return basePos[p][k];if(s<=EN)return path[(startIdx[p]+s)%52];if(s<FIN)return homeArr[p][s-HS];return[7,7];}
+function updOne(p,k){
+var rc=getRC(p,pos[p][k],k);
+var cx=(rc[1]+0.5)*100/15;
+var cy=(rc[0]+0.5)*100/15;
+var ox=0,oy=0;
+if(pos[p][k]>=0 && pos[p][k]<FIN){
+var same=false; for(var q=0;q<4;q++){ if(q!=k && pos[p][q]==pos[p][k]) same=true; }
+if(same){ ox=(k%2==0?-0.8:0.8); oy=(k<2?-0.8:0.8); }
+}
+if(pos[p][k]>=FIN){ ox=(k%2==0?-1.1:1.1); oy=(k<2?-1.1:1.1); }
+tokens[p][k].style.left=(cx-2.3+ox)+'%';
+tokens[p][k].style.top=(cy-2.7+oy)+'%';
+}
+function updStat(){for(var p=0;p<4;p++){var b=0,f=0;for(var i=0;i<4;i++){if(pos[p][i]==-1)b++;if(pos[p][i]>=FIN)f++;}document.getElementById('s'+p).innerText=f==4?'WINNER':b+' in base - '+f+' home';}}
+function clearGlow(){var a=document.querySelectorAll('.token');for(var i=0;i<a.length;i++)a[i].classList.remove('go');}
+function updDice(){for(var i=0;i<4;i++){var pod=document.getElementById('pod'+i);if(i==turn){pod.classList.add('on');pod.classList.remove('off');document.getElementById('n'+i).innerText=isCpu(i)?'Computer...':'Your turn - Tap!';}else{pod.classList.remove('on');pod.classList.add('off');if(active.indexOf(i)!=-1)document.getElementById('n'+i).innerText='Wait';}}}
+window.roll=function(p){ensure();if(!started){document.getElementById('msg').innerText='Pick players + START first!';return;}if(p!=turn){document.getElementById('msg').innerText='Wait! It is '+names[turn]+' turn!';return;}if(waiting){document.getElementById('msg').innerText=names[turn]+' must move a token first!';return;}if(rolling)return;rolling=true;var fin=Math.floor(Math.random()*6)+1;var el=document.getElementById('d'+p);el.classList.add('roll');document.getElementById('n'+p).innerText='Rolling...';beep(500,.12);var tk=0;var an=setInterval(function(){draw(p,Math.floor(Math.random()*6)+1);tk++;if(tk>7){clearInterval(an);el.classList.remove('roll');rolling=false;dice=fin;draw(p,fin);afterRoll();}},90);};
+function afterRoll(){movable=[];for(var k=0;k<4;k++){if(pos[turn][k]==-1&&dice==6)movable.push(k);else if(pos[turn][k]>=0&&pos[turn][k]+dice<=FIN)movable.push(k);}if(movable.length==0){document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - No move.';setTimeout(nextTurn,1100);return;}waiting=true;if(isCpu(turn)){document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - Computer moving...';cpuPick();return;}document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - TAP the seed YOU want!';for(var i=0;i<movable.length;i++)tokens[turn][movable[i]].classList.add('go');}
+function doMove(k){clearGlow();waiting=false;var t=turn;var from=pos[t][k];beep(520,.1);if(pos[t][k]==-1)pos[t][k]=0;else pos[t][k]+=dice;updOne(t,k);var killed=false;if(pos[t][k]<=EN){var gi=(startIdx[t]+pos[t][k])%52;if(!safe[gi]){for(var op=0;op<4;op++){if(op==t||active.indexOf(op)==-1)continue;for(var ok=0;ok<4;ok++){if(pos[op][ok]>=0&&pos[op][ok]<=EN){var og=(startIdx[op]+pos[op][ok])%52;if(og==gi){pos[op][ok]=-1;updOne(op,ok);killed=true;}}}}}}if(killed){document.getElementById('msg').innerText=names[t]+' KILLED! Roll again!';playNote(200,.3,.2,'square');}else if(pos[t][k]>=FIN)document.getElementById('msg').innerText=names[t]+' seed LAID! Moved '+dice+' from '+from+' to HOME';else document.getElementById('msg').innerText=names[t]+' moved '+dice+' : '+from+' -> '+pos[t][k];updStat();updDice();if(pos[t][0]>=FIN&&pos[t][1]>=FIN&&pos[t][2]>=FIN&&pos[t][3]>=FIN){playWinMusic();document.getElementById('winTitle').innerText=names[t]+' WINS!';document.getElementById('winSub').innerText='CHAMPION';setTimeout(function(){document.getElementById('winOverlay').classList.remove('hide');},600);return;}if(dice==6||killed){updDice();if(isCpu(turn))cpuTurn();return;}setTimeout(nextTurn,900);}
+function nextTurn(){clearGlow();waiting=false;var all=document.querySelectorAll('.score div');for(var i=0;i<all.length;i++)all[i].classList.remove('on2');var ix=active.indexOf(turn);turn=active[(ix+1)%active.length];document.getElementById('p'+turn).classList.add('on2');updDice();if(isCpu(turn))cpuTurn();else document.getElementById('msg').innerText=names[turn]+' turn - Tap YOUR corner dice';}
+draw(0,6);draw(1,6);draw(2,6);draw(3,6);updStat();updDice();
+</script>
+</body>
+</html>
