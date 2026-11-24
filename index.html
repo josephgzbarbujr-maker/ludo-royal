@@ -194,36 +194,4 @@ function beep(f,d){try{if(!window._soundOn)return;ensure();if(!actx)return;var t
 function draw(p,v){var el=document.getElementById('die'+p);el.innerHTML='';for(var i=0;i<9;i++){var s=document.createElement('div');s.className='pip'+(pips[v].indexOf(i)==-1?' h':'');el.appendChild(s);}document.getElementById('n'+p).innerText='Rolled '+v;}
 var board=document.getElementById('board'),wrap=document.getElementById('boardBox');
 var tileInfo={};
-for(var ti=0;ti<52;ti++){tileInfo[path[ti][0]+','+path[ti][1]]={k:'path'};}
-for(var tp=0;tp<4;tp++){tileInfo[path[startIdx[tp]][0]+','+path[startIdx[tp]][1]]={k:'start',p:tp};for(var tj=0;tj<5;tj++){tileInfo[homeArr[tp][tj][0]+','+homeArr[tp][tj][1]]={k:'home',p:tp};}}
-for(var r=0;r<15;r++){for(var c=0;c<15;c++){var d=document.createElement('div');d.className='cell';var inf=tileInfo[r+','+c];if(inf){d.className+=' t';if(inf.k!='path'){d.className+=' '+inf.k;d.style.setProperty('--tc',colors[inf.p]);}}board.appendChild(d);}}
-var ynum=[1,3,4,2];
-for(var yp=0;yp<4;yp++){var yd=document.createElement('div');yd.className='yard y'+yp;yd.style.setProperty('--yc',colors[yp]);var yt=document.createElement('div');yt.className='ytag';yt.innerText='PLAYER '+ynum[yp];yd.appendChild(yt);wrap.insertBefore(yd,board);for(var sk=0;sk<4;sk++){var sl=document.createElement('div');sl.className='slot';sl.style.setProperty('--c',colors[yp]);sl.style.left=((basePos[yp][sk][1]+0.5)*100/15)+'%';sl.style.top=((basePos[yp][sk][0]+0.5)*100/15)+'%';wrap.appendChild(sl);}}
-function setCell(r,c,txt){var cell=board.children[r*15+c];if(cell){cell.innerText=txt;}}
-for(var si=0;si<52;si++){if(safe[si]){var cell=board.children[path[si][0]*15+path[si][1]];if(cell){cell.innerText='\u2605';}}}
-for(var pp=0;pp<4;pp++){tokens[pp]=[];for(var kk=0;kk<4;kk++){ (function(a,b){var t=document.createElement('div');t.className='token';t.style.setProperty('--c',colors[a]);t.onclick=function(){if(waiting&&turn==a&&!isCpu(a)&&movable.indexOf(b)!=-1)doMove(b);};wrap.appendChild(t);tokens[a].push(t);updOne(a,b);})(pp,kk);}}
-function getRC(p,s,k){if(s==-1)return basePos[p][k];if(s<=EN)return path[(startIdx[p]+s)%52];if(s<FIN)return homeArr[p][s-HS];return[7,7];}
-function updOne(p,k){
-var rc=getRC(p,pos[p][k],k);
-var cx=(rc[1]+0.5)*100/15;
-var cy=(rc[0]+0.5)*100/15;
-var ox=0,oy=0;
-if(pos[p][k]>=0 && pos[p][k]<FIN){
-var same=false; for(var q=0;q<4;q++){ if(q!=k && pos[p][q]==pos[p][k]) same=true; }
-if(same){ ox=(k%2==0?-0.8:0.8); oy=(k<2?-0.8:0.8); }
-}
-if(pos[p][k]>=FIN){ ox=(k%2==0?-1.1:1.1); oy=(k<2?-1.1:1.1); }
-tokens[p][k].style.left=(cx-2.3+ox)+'%';
-tokens[p][k].style.top=(cy-2.7+oy)+'%';
-}
-function updStat(){for(var p=0;p<4;p++){var b=0,f=0;for(var i=0;i<4;i++){if(pos[p][i]==-1)b++;if(pos[p][i]>=FIN)f++;}document.getElementById('s'+p).innerText=f==4?'WINNER':b+' in base - '+f+' home';}}
-function clearGlow(){var a=document.querySelectorAll('.token');for(var i=0;i<a.length;i++)a[i].classList.remove('go');}
-function updDice(){for(var i=0;i<4;i++){var pod=document.getElementById('pod'+i);if(i==turn){pod.classList.add('on');pod.classList.remove('off');document.getElementById('n'+i).innerText=isCpu(i)?'Computer...':'Your turn - Tap!';}else{pod.classList.remove('on');pod.classList.add('off');if(active.indexOf(i)!=-1)document.getElementById('n'+i).innerText='Wait';}}}
-window.roll=function(p){ensure();if(!started){document.getElementById('msg').innerText='Pick players + START first!';return;}if(p!=turn){document.getElementById('msg').innerText='Wait! It is '+names[turn]+' turn!';return;}if(waiting){document.getElementById('msg').innerText=names[turn]+' must move a token first!';return;}if(rolling)return;rolling=true;var fin=Math.floor(Math.random()*6)+1;var el=document.getElementById('d'+p);el.classList.add('roll');document.getElementById('n'+p).innerText='Rolling...';beep(500,.12);var tk=0;var an=setInterval(function(){draw(p,Math.floor(Math.random()*6)+1);tk++;if(tk>7){clearInterval(an);el.classList.remove('roll');rolling=false;dice=fin;draw(p,fin);afterRoll();}},90);};
-function afterRoll(){movable=[];for(var k=0;k<4;k++){if(pos[turn][k]==-1&&dice==6)movable.push(k);else if(pos[turn][k]>=0&&pos[turn][k]+dice<=FIN)movable.push(k);}if(movable.length==0){document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - No move.';setTimeout(nextTurn,1100);return;}waiting=true;if(isCpu(turn)){document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - Computer moving...';cpuPick();return;}document.getElementById('msg').innerText=names[turn]+' rolled '+dice+' - TAP the seed YOU want!';for(var i=0;i<movable.length;i++)tokens[turn][movable[i]].classList.add('go');}
-function doMove(k){clearGlow();waiting=false;var t=turn;var from=pos[t][k];beep(520,.1);if(pos[t][k]==-1)pos[t][k]=0;else pos[t][k]+=dice;updOne(t,k);var killed=false;if(pos[t][k]<=EN){var gi=(startIdx[t]+pos[t][k])%52;if(!safe[gi]){for(var op=0;op<4;op++){if(op==t||active.indexOf(op)==-1)continue;for(var ok=0;ok<4;ok++){if(pos[op][ok]>=0&&pos[op][ok]<=EN){var og=(startIdx[op]+pos[op][ok])%52;if(og==gi){pos[op][ok]=-1;updOne(op,ok);killed=true;}}}}}}if(killed){document.getElementById('msg').innerText=names[t]+' KILLED! Roll again!';playNote(200,.3,.2,'square');}else if(pos[t][k]>=FIN)document.getElementById('msg').innerText=names[t]+' seed LAID! Moved '+dice+' from '+from+' to HOME';else document.getElementById('msg').innerText=names[t]+' moved '+dice+' : '+from+' -> '+pos[t][k];updStat();updDice();if(pos[t][0]>=FIN&&pos[t][1]>=FIN&&pos[t][2]>=FIN&&pos[t][3]>=FIN){playWinMusic();document.getElementById('winTitle').innerText=names[t]+' WINS!';document.getElementById('winSub').innerText='CHAMPION';setTimeout(function(){document.getElementById('winOverlay').classList.remove('hide');},600);return;}if(dice==6||killed){updDice();if(isCpu(turn))cpuTurn();return;}setTimeout(nextTurn,900);}
-function nextTurn(){clearGlow();waiting=false;var all=document.querySelectorAll('.score div');for(var i=0;i<all.length;i++)all[i].classList.remove('on2');var ix=active.indexOf(turn);turn=active[(ix+1)%active.length];document.getElementById('p'+turn).classList.add('on2');updDice();if(isCpu(turn))cpuTurn();else document.getElementById('msg').innerText=names[turn]+' turn - Tap YOUR corner dice';}
-draw(0,6);draw(1,6);draw(2,6);draw(3,6);updStat();updDice();
-</script>
-</body>
-</html>
+for(var ti=0;ti
