@@ -1,0 +1,14 @@
+{
+  "name": "Ludo Royal",
+  "short_name": "Ludo Royal",
+  "display": "standalone",
+  "background_color": "#1a0b2e",
+  "theme_color": "#1a0b2e",
+  "icons": [
+    {
+      "src": "4e3c80e4-d3f7-2f15-c43d-e57c002cb807.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
