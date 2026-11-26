@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script>if(typeof Peer==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');}</script>
+<script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+<script>if(typeof mqtt==='undefined'){document.write('<script src="https://cdn.jsdelivr.net/npm/mqtt@4.3.7/dist/mqtt.min.js"><\/script>');}</script>
 <title>Ludo Royal </title>
 <style>
 body{margin:0;background:#0b2a6b;color:#fff;font-family:Arial;text-align:center;padding:8px}
@@ -68,7 +68,7 @@ h1{color:gold;margin:2px;font-size:26px}
 .red{background:#e62e2e}.green{background:#1da851}.blue{background:#2196f3}.yellow{background:#ffcc00;color:#000}
 .on2{outline:3px solid gold}#msg{color:#ffe27a;font-weight:bold;min-height:20px;margin-top:6px}
 button{border:0;border-radius:20px;padding:8px 14px;font-weight:bold;cursor:pointer;margin:3px}
-.ov{position:fixed;inset:0;background:rgba(10,0,30,.93);z-index:99;display:flex;align-items:center;justify-content:center;padding:16px}
+.ov{position:fixed;inset:0;background:rgba(10,0,30,.93);z-index:99;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}.ov .card{margin:auto}
 .ov.hide{display:none}.card{background:#fff;color:#222;border-radius:16px;padding:16px;width:min(92vw,340px)}
 .card input{width:100%;padding:10px;border-radius:10px;border:2px solid #c9a227;text-align:center;margin:8px 0}
 .big{width:100%;padding:12px;border-radius:20px;font-weight:bold;margin:4px 0}.gold{background:#c9a227}.dark{background:#2a0a4a;color:#fff}
@@ -170,7 +170,14 @@ window.setCount = function(n){
 <button class="opt" id="opt3" onclick="window.setCount(3)">3 Players</button>
 <button class="opt sel" id="opt4" onclick="window.setCount(4)">4 Players</button>
 <p id="countInfo">4 Players: JOSEPH, MENSAH, PEEZ, THEO</p>
-<input id="myName" placeholder="Your name (optional)">
+<p style="margin:8px 0 2px;font-size:13px"><b>Player names</b> <span style="color:#666">(type your own, or leave empty)</span></p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+<input id="myName" placeholder="JOSEPH" maxlength="12" style="box-sizing:border-box;min-width:0;margin:0;border-color:#e62e2e;padding:8px">
+<input id="nm3" placeholder="MENSAH" maxlength="12" style="box-sizing:border-box;min-width:0;margin:0;border-color:#2196f3;padding:8px">
+<input id="nm2" placeholder="PEEZ" maxlength="12" style="box-sizing:border-box;min-width:0;margin:0;border-color:#e0b000;padding:8px">
+<input id="nm1" placeholder="THEO" maxlength="12" style="box-sizing:border-box;min-width:0;margin:0;border-color:#1da851;padding:8px">
+</div>
+<p style="margin:4px 0 8px;font-size:11px;color:#777">In an online room, each player types only their own name in the first box.</p>
 <button class="big gold" onclick="window.startGame()">▶ START GAME 🎵</button>
 <button class="big dark" onclick="window.showRoomFromStart()">🏠 CREATE / JOIN ROOM</button>
 </div></div>
@@ -240,7 +247,7 @@ setTimeout(function(){if(jungle===j)bird();},1200);
 window.stopJungle=function(){try{var j=jungle;if(!j)return;jungle=null;var t=actx.currentTime;j.master.gain.cancelScheduledValues(t);j.master.gain.setValueAtTime(Math.max(j.master.gain.value,0.0001),t);j.master.gain.exponentialRampToValueAtTime(0.0001,t+1);setTimeout(function(){for(var i=0;i<j.nodes.length;i++){try{j.nodes[i].stop();}catch(e){}}try{j.master.disconnect();}catch(e){}},1300);}catch(e){}};
 function playWinMusic(){try{if(!window._musicOn)return;var notes=[523,659,784,1046,784,1046];var i=0;var iv=setInterval(function(){if(i>=notes.length){clearInterval(iv);return;}playNote(notes[i],.4,.15,'triangle');i++;},300);}catch(e){}}
 function isCpu(p){return ((window._mode=='cpu') && p!=human)||(net.on&&net.host&&!!net.bots[p]);}
-window.startGame=function(){try{ensure();var c=document.getElementById('myName').value.trim().toUpperCase();if(c)names[0]=c;document.getElementById('startOverlay').classList.add('hide');started=true;var pcount=window._pcount||4;if(pcount==2)active=[0,2];if(pcount==3)active=[0,3,2];if(pcount==4)active=[0,3,2,1];if(window._mode=='cpu'){for(var i=0;i<active.length;i++){if(active[i]!=human)names[active[i]]=names[active[i]]+' ROBOT';}document.getElementById('roomLabel').innerText='Vs Computer';}for(var p=0;p<4;p++){if(active.indexOf(p)==-1){document.getElementById('p'+p).style.visibility='hidden';document.getElementById('pod'+p).classList.add('hide');for(var k=0;k<4;k++)tokens[p][k].style.display='none';}}turn=active[0];updDice();updStat();if(window._musicOn)window.startMusicNow();if(isCpu(turn))cpuTurn();else document.getElementById('msg').innerText=names[turn]+' turn - Tap YOUR corner dice';beep(600,.15);}catch(e){}};
+window.startGame=function(){try{ensure();var c=document.getElementById('myName').value.trim().toUpperCase();if(c)names[0]=c;[['nm3',3],['nm2',2],['nm1',1]].forEach(function(x){var v=document.getElementById(x[0]).value.trim().toUpperCase().slice(0,12);if(v)names[x[1]]=v;});document.getElementById('startOverlay').classList.add('hide');started=true;var pcount=window._pcount||4;if(pcount==2)active=[0,2];if(pcount==3)active=[0,3,2];if(pcount==4)active=[0,3,2,1];if(window._mode=='cpu'){for(var i=0;i<active.length;i++){if(active[i]!=human)names[active[i]]=names[active[i]]+' ROBOT';}document.getElementById('roomLabel').innerText='Vs Computer';}for(var p=0;p<4;p++){if(active.indexOf(p)==-1){document.getElementById('p'+p).style.visibility='hidden';document.getElementById('pod'+p).classList.add('hide');for(var k=0;k<4;k++)tokens[p][k].style.display='none';}else setLabel(p,names[p]);}turn=active[0];updDice();updStat();if(window._musicOn)window.startMusicNow();if(isCpu(turn))cpuTurn();else document.getElementById('msg').innerText=names[turn]+' turn - Tap YOUR corner dice';beep(600,.15);}catch(e){}};
 function cpuTurn(){if(!started)return;document.getElementById('msg').innerText=names[turn]+' is thinking...';setTimeout(function(){if(started&&!waiting&&!rolling&&!moving)window.roll(turn);},1000);}
 function gIdx(p,sq){return (startIdx[p]+sq)%52;}
 function threatAt(gi,me){var th=0;for(var op=0;op<4;op++){if(op==me||active.indexOf(op)==-1)continue;for(var ok=0;ok<4;ok++){var sq=pos[op][ok];if(sq<0||sq>EN)continue;var d=(gi-gIdx(op,sq)+52)%52;if(d>=1&&d<=6)th+=0.2;else if(d>=7&&d<=12)th+=0.05;}}return th;}
@@ -262,7 +269,8 @@ if(sc>bestScore){bestScore=sc;best=k;}}
 setTimeout(function(){actMove(best);},700);}
 window.showRoom=function(){document.getElementById('roomOverlay').classList.remove('hide');};
 window.showRoomFromStart=function(){document.getElementById('startOverlay').classList.add('hide');window.showRoom();};
-function perr(e,what){var t=(e&&e.type)||'error';if(t=='server-error'||t=='network'||t=='socket-error'||t=='socket-closed'||t=='disconnected')return 'Cannot reach the free room server ('+t+'). Check your internet, turn off VPN/ad-blocker, switch Wi-Fi/data, then try again in a minute.';if(t=='browser-incompatible')return 'This browser cannot do rooms. Try Safari or Chrome.';return 'Could not '+what+' ('+t+'). Try again.';}
+var BROKERS=['wss://mqtt.eclipseprojects.io:443/mqtt','wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt'];
+var NS='ludoroyal1/',GRACE=25000;
 function fileMode(){if(location.protocol=='http:'||location.protocol=='https:')return false;nmsg('Rooms need the online link. You opened the game as a saved file. Upload it to GitHub Pages and open the https:// link (the one you used before), then try again.');return true;}
 function nmsg(t){document.getElementById('roomMsg').innerText=t;}
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -270,11 +278,21 @@ function stHash(){return turn+'/'+pos.toString();}
 function gNext(){var e=epoch;pendNext=true;return function(){if(e===epoch){pendNext=false;nextTurn();}};}
 function isMine(p){return p===net.me||(net.host&&!!net.bots[p]);}
 function setLabel(c,n){var d=document.getElementById('p'+c);if(d&&d.childNodes[0])d.childNodes[0].nodeValue=n;var b=document.querySelector('#pod'+c+' .info b');if(b)b.innerText=n;}
-function netSend(m){for(var i=0;i<net.players.length;i++){var c=net.players[i].conn;if(c&&c.open){try{c.send(m);}catch(e){}}}}
 function myName(d){return (document.getElementById('myName').value||'').trim().toUpperCase().slice(0,12)||d;}
+function rid(){return Math.random().toString(36).slice(2,10);}
+function netSend(m){if(net.on&&net.host&&net.mq){try{net.mq.publish(net.base+'/all',JSON.stringify(m));}catch(e){}}}
+function sendTo(cid,m){try{net.mq.publish(net.base+'/c/'+cid,JSON.stringify(m));}catch(e){}}
+function mqttOk(){if(typeof mqtt==='undefined'||!mqtt.connect){nmsg('Cannot load the room service. Check your internet and reload the page.');return false;}return true;}
+function openMq(url,opts,onOk,onFail){var c,done=false;try{c=mqtt.connect(url,opts);}catch(e){onFail(e);return null;}
+ var to=setTimeout(function(){if(!done){done=true;try{c.end(true);}catch(e){}onFail(new Error('timeout'));}},7500);
+ c.once('connect',function(){if(done){try{c.end(true);}catch(e){}return;}done=true;clearTimeout(to);onOk(c);});
+ c.on('error',function(){});return c;}
 window.setRoomSize=function(n){net.size=n;for(var i=2;i<=4;i++)document.getElementById('rs'+i).classList.toggle('sel',i==n);};
 window.closeRoom=function(){if(net.on&&!started)leaveRoom();document.getElementById('roomOverlay').classList.add('hide');if(!started)document.getElementById('startOverlay').classList.remove('hide');};
-function leaveRoom(){try{if(net.peer)net.peer.destroy();}catch(e){}net.on=false;net.host=false;net.peer=null;net.conn=null;net.players=[];net.bots={};net.me=-1;reqQ.length=0;netQ.length=0;window._mode='pass';room='';
+function leaveRoom(){var q=net.mq;
+ try{if(q){if(net.host)q.publish(net.base+'/info','{"gone":1}',{retain:true});else if(net.conn)net.conn.send({t:'bye'});setTimeout(function(){try{q.end(true);}catch(e){}},400);}}catch(e){}
+ if(net.goneT){clearTimeout(net.goneT);net.goneT=null;}
+ net.on=false;net.host=false;net.mq=null;net.conn=null;net.players=[];net.vc={};net.bots={};net.me=-1;net.seq=0;net.seqIn=0;net.dead=false;reqQ.length=0;netQ.length=0;window._mode='pass';room='';
  document.getElementById('roomLabel').innerText='No Room';document.getElementById('roomSetup').style.display='block';document.getElementById('createdBox').style.display='none';document.getElementById('lobbyBox').style.display='none';document.getElementById('roomStartBtn').style.display='none';}
 function showLobbyUI(){document.getElementById('roomSetup').style.display='none';document.getElementById('lobbyBox').style.display='block';nmsg('');}
 function renderLobby(names,size){names=names||net.players.map(function(p){return p.name;});size=size||net.size;var h='';for(var i=0;i<size;i++)h+='<div>'+(i+1)+'. '+(names[i]?esc(names[i])+(i==0?' 👑':''):'<span style="color:#999;font-weight:normal">waiting...</span>')+'</div>';
@@ -285,38 +303,52 @@ function broadcastLobby(){netSend({t:'lobby',size:net.size,names:net.players.map
 // ---------- HOST ----------
 window.createRoom=function(){
  if(net.on)return;if(fileMode())return;if(started){nmsg('Game already started. Press RESTART first.');return;}
- if(typeof Peer==='undefined'){nmsg('Cannot reach the room service. Check your internet and reload.');return;}
- var nm=myName('HOST'),tries=0;nmsg('Creating room...');
- (function attempt(){
-  var code=String(Math.floor(1000+Math.random()*9000)),pr,opened=false;
-  try{pr=new Peer('ludoroyal-'+code);}catch(e){nmsg('Room service error: '+(e&&e.message||e)+'. Reload the page and try again.');return;}
-  pr.on('open',function(){opened=true;net.on=true;net.host=true;net.peer=pr;net.code=code;room=code;window._mode='room';net.players=[{name:nm,conn:null,color:-1}];
-   document.getElementById('createdBox').style.display='block';document.getElementById('roomCodeBig').innerText=code;document.getElementById('roomLabel').innerText='Room: '+code;showLobbyUI();renderLobby();});
-  pr.on('connection',function(conn){hostConn(conn);});
-  pr.on('disconnected',function(){try{if(!pr.destroyed)pr.reconnect();}catch(e){}});
-  pr.on('error',function(e){if(!opened){try{pr.destroy();}catch(x){}if(e&&e.type=='unavailable-id'&&tries<6){tries++;attempt();}else nmsg(perr(e,'create room'));}});
-  setTimeout(function(){if(!opened&&!net.on){nmsg('Room server is not answering. Check internet / VPN, then press CREATE ROOM again.');try{pr.destroy();}catch(x){}}},12000);
- })();
+ if(!mqttOk())return;
+ var nm=myName('HOST'),bi=0;nmsg('Creating room...');
+ function nextBroker(){
+  if(bi>=BROKERS.length){nmsg('Cannot reach any room server. Check your internet or VPN, switch Wi-Fi/data, then try again.');return;}
+  tryCode(BROKERS[bi++],0);}
+ function tryCode(url,tries){
+  var code=String(Math.floor(1000+Math.random()*9000)),base=NS+code;
+  openMq(url,{clientId:'lrh'+rid(),clean:true,keepalive:20,reconnectPeriod:3000,connectTimeout:7000,will:{topic:base+'/info',payload:'{"gone":1}',qos:0,retain:true}},function(mq){
+   var taken=false;
+   function chk(topic,payload){if(topic!=base+'/info')return;try{var d=JSON.parse(payload.toString());if(d&&!d.gone)taken=true;}catch(e){}}
+   mq.on('message',chk);mq.subscribe(base+'/info',{qos:0});
+   setTimeout(function(){mq.removeListener('message',chk);
+    if(taken){try{mq.end(true);}catch(e){}if(tries<5)tryCode(url,tries+1);else nextBroker();return;}
+    net.on=true;net.host=true;net.mq=mq;net.base=base;net.code=code;net.cid='host';net.seq=0;net.seqIn=0;net.vc={};room=code;window._mode='room';net.players=[{name:nm,conn:null,color:-1}];
+    function pubInfo(){try{mq.publish(base+'/info',JSON.stringify({size:net.size,v:1}),{retain:true});}catch(e){}}
+    pubInfo();mq.subscribe(base+'/h',{qos:0});mq.on('connect',pubInfo);
+    mq.on('message',function(topic,payload){if(topic!=base+'/h')return;var d;try{d=JSON.parse(payload.toString());}catch(e){return;}if(!d||!d.c||!d.m)return;try{hostRecv(hostConnFor(d.c),d.m);}catch(e){}});
+    document.getElementById('createdBox').style.display='block';document.getElementById('roomCodeBig').innerText=code;document.getElementById('roomLabel').innerText='Room: '+code;showLobbyUI();renderLobby();
+   },1300);
+  },function(){nextBroker();});}
+ nextBroker();
 };
 window.copyRoom=function(){if(navigator.clipboard)navigator.clipboard.writeText(room);nmsg('Copied: '+room);};
-function hostConn(conn){conn.on('data',function(m){try{hostRecv(conn,m);}catch(e){}});conn.on('close',function(){hostLeft(conn);});conn.on('error',function(){hostLeft(conn);});}
+function hostConnFor(cid){return net.vc[cid]||(net.vc[cid]={cid:cid,open:true,send:function(x){sendTo(cid,x);},close:function(){}});}
 function playerOf(conn){for(var i=0;i<net.players.length;i++)if(net.players[i].conn===conn)return net.players[i];return null;}
 function hostRecv(conn,m){
- if(!m||!m.t)return;
- if(m.t=='hello'){if(playerOf(conn))return;
-  if(started||net.players.length>=net.size){try{conn.send({t:'full',why:started?'That game already started.':'That room is full.'});}catch(e){}setTimeout(function(){try{conn.close();}catch(e){}},600);return;}
+ if(!m||!m.t)return;var pl=playerOf(conn);
+ if(m.t=='hello'){
+  if(pl){if(pl.timer){clearTimeout(pl.timer);pl.timer=null;}
+   if(started){if(pl.gone){pl.gone=false;net.bots[pl.color]=false;names[pl.color]=pl.name;setLabel(pl.color,pl.name);netSend({t:'unbot',c:pl.color,name:pl.name});}sendSnap(conn);}else broadcastLobby();
+   return;}
+  if(started||net.players.length>=net.size){conn.send({t:'full',why:started?'That game already started.':'That room is full.'});return;}
   net.players.push({name:String(m.name||'').trim().toUpperCase().slice(0,12)||('PLAYER '+(net.players.length+1)),conn:conn,color:-1});broadcastLobby();return;}
- var pl=playerOf(conn);if(!pl||!started)return;
+ if(m.t=='bye'){hostLeft(conn,!!m.abn);return;}
+ if(!pl||!started)return;
  if(m.t=='reqroll'){if(m.p===pl.color)reqQ.push({t:'roll',p:pl.color,at:Date.now()});}
  else if(m.t=='reqmove'){if(m.p===pl.color&&typeof m.k=='number')reqQ.push({t:'move',p:pl.color,k:m.k,at:Date.now()});}
  else if(m.t=='reqsync'){sendSnap(conn);}
 }
-function hostLeft(conn){var pl=playerOf(conn);if(!pl||pl.gone)return;pl.gone=true;
+function hostLeft(conn,abn){var pl=playerOf(conn);if(!pl||pl.gone)return;
  if(!started){net.players.splice(net.players.indexOf(pl),1);broadcastLobby();return;}
- var c=pl.color;net.bots[c]=true;names[c]=names[c]+' BOT';setLabel(c,names[c]);netSend({t:'bot',c:c});
+ if(abn){if(pl.timer)return;pl.timer=setTimeout(function(){pl.timer=null;makeBot(pl);},GRACE);return;}
+ if(pl.timer){clearTimeout(pl.timer);pl.timer=null;}makeBot(pl);}
+function makeBot(pl){if(pl.gone)return;pl.gone=true;var c=pl.color;net.bots[c]=true;names[c]=names[c]+' BOT';setLabel(c,names[c]);netSend({t:'bot',c:c});
  reqQ=reqQ.filter(function(r){return r.p!==c;});
- setTimeout(function(){if(started&&turn==c&&!rolling&&!moving){if(waiting)cpuPick();else cpuTurn();}},900);
-}
+ setTimeout(function(){if(started&&turn==c&&!rolling&&!moving){if(waiting)cpuPick();else cpuTurn();}},900);}
 window.netStart=function(){
  if(!net.host||started)return;var cnt=net.players.length;if(cnt<2){nmsg('Need at least 2 players');return;}
  var act=cnt==2?[0,2]:cnt==3?[0,3,2]:[0,3,2,1],nm=defNames.slice(),i;
@@ -325,38 +357,59 @@ window.netStart=function(){
  for(i=1;i<cnt;i++){try{net.players[i].conn.send({t:'start',active:act,names:nm,you:act[i]});}catch(e){}}
  netBegin({active:act,names:nm});
 };
-function sendSnap(conn){if(rolling||moving){setTimeout(function(){sendSnap(conn);},300);return;}try{conn.send({t:'snap',pos:pos,turn:turn,dice:dice,waiting:waiting,movable:movable,pn:pendNext});}catch(e){}}
+function sendSnap(conn){if(rolling||moving){setTimeout(function(){sendSnap(conn);},300);return;}try{conn.send({t:'snap',pos:pos,turn:turn,dice:dice,waiting:waiting,movable:movable,pn:pendNext,s:net.seq});}catch(e){}}
 
 // ---------- JOINER ----------
 window.joinRoom=function(){
  var c=document.getElementById('joinCode').value.trim();
  if(!/^\d{4}$/.test(c)){nmsg('Enter 4-digit code');return;}
  if(net.on)return;if(fileMode())return;if(started){nmsg('Game already started. Press RESTART first.');return;}
- if(typeof Peer==='undefined'){nmsg('Cannot reach the room service. Check your internet and reload.');return;}
- var nm=myName('PLAYER'),done=false,pr;nmsg('Connecting...');
- try{pr=new Peer();}catch(e){nmsg('Room service error. Try again.');return;}
- var to=setTimeout(function(){if(!done){nmsg('Room not found. Check the code and try again.');try{pr.destroy();}catch(e){}}},12000);
- pr.on('open',function(){var conn=pr.connect('ludoroyal-'+c,{reliable:true});
-  conn.on('open',function(){done=true;clearTimeout(to);net.on=true;net.host=false;net.peer=pr;net.conn=conn;net.code=c;room=c;window._mode='room';
-   conn.send({t:'hello',name:nm});document.getElementById('roomLabel').innerText='Room: '+c;showLobbyUI();document.getElementById('lobbyTitle').innerText='Joined! Waiting for host...';});
-  conn.on('data',function(m){try{clientRecv(m);}catch(e){}});
-  conn.on('close',clientClosed);conn.on('error',clientClosed);});
- pr.on('error',function(e){if(!done){clearTimeout(to);nmsg(e&&e.type=='peer-unavailable'?'Room not found. Check the code.':perr(e,'join'));try{pr.destroy();}catch(x){}}});
+ if(!mqttOk())return;
+ var nm=myName('PLAYER'),cid='p'+rid(),base=NS+c,decided=false,all=[],failed=0;nmsg('Looking for room '+c+'...');
+ var to=setTimeout(function(){if(decided)return;decided=true;all.forEach(function(o){try{o.end(true);}catch(e){}});nmsg('Room not found. Check the code, and make sure the host has created the room and kept the game open.');},12000);
+ BROKERS.forEach(function(url){
+  openMq(url,{clientId:cid+'_'+Math.floor(Math.random()*1e5),clean:true,keepalive:20,reconnectPeriod:3000,connectTimeout:7000,will:{topic:base+'/h',payload:JSON.stringify({c:cid,m:{t:'bye',abn:1}}),qos:0,retain:false}},function(mq){
+   if(decided){try{mq.end(true);}catch(e){}return;}
+   all.push(mq);
+   mq.on('message',function(topic,payload){
+    if(net.mq===mq){clientRoute(topic,payload);return;}
+    if(decided||topic!=base+'/info')return;var info;try{info=JSON.parse(payload.toString());}catch(e){return;}if(!info||info.gone)return;
+    decided=true;clearTimeout(to);all.forEach(function(o){if(o!==mq){try{o.end(true);}catch(e){}}});adopt(mq,info,cid,base,c,nm);});
+   mq.subscribe(base+'/info',{qos:0});
+  },function(){failed++;if(failed>=BROKERS.length&&!decided){decided=true;clearTimeout(to);nmsg('Cannot reach any room server. Check your internet or VPN, switch Wi-Fi/data, then try again.');}});
+ });
 };
+function adopt(mq,info,cid,base,c,nm){
+ net.on=true;net.host=false;net.mq=mq;net.base=base;net.cid=cid;net.code=c;net.seqIn=0;net.dead=false;net.myname=nm;room=c;window._mode='room';if(info.size)net.size=info.size;
+ net.conn={open:true,send:function(m){try{mq.publish(base+'/h',JSON.stringify({c:cid,m:m}));}catch(e){}}};
+ var pend=2;function sub(){if(--pend==0)net.conn.send({t:'hello',name:nm});}
+ mq.subscribe(base+'/all',{qos:0},sub);mq.subscribe(base+'/c/'+cid,{qos:0},sub);
+ mq.on('connect',function(){if(net.mq===mq&&net.on&&!net.dead){net.conn.send({t:'hello',name:nm,re:1});if(started)document.getElementById('msg').innerText='Reconnected';}});
+ mq.on('close',function(){if(net.mq===mq&&net.on&&started&&!net.dead)document.getElementById('msg').innerText='Connection lost - reconnecting...';});
+ document.getElementById('roomLabel').innerText='Room: '+c;showLobbyUI();document.getElementById('lobbyTitle').innerText='Joined! Waiting for host...';}
+function clientRoute(topic,payload){var m;try{m=JSON.parse(payload.toString());}catch(e){return;}if(!m)return;
+ if(topic==net.base+'/info'){
+  if(m.gone){if(!net.goneT){if(started)document.getElementById('msg').innerText='Host connection lost - waiting...';net.goneT=setTimeout(function(){net.goneT=null;clientClosed();},GRACE);}}
+  else if(net.goneT){clearTimeout(net.goneT);net.goneT=null;if(started)document.getElementById('msg').innerText='Host is back';}
+  return;}
+ clientRecv(m);}
 function clientClosed(){if(net.dead||!net.on||net.host)return;net.dead=true;
- if(!started){nmsg('The host left the room.');leaveRoom();net.dead=false;return;}
- started=false;document.getElementById('msg').innerText='The host left the room. Game ended - press RESTART.';document.getElementById('roomLabel').innerText='Room closed';}
+ if(!started){nmsg('The host left the room.');leaveRoom();return;}
+ started=false;document.getElementById('msg').innerText='The host left the room. Game ended - press RESTART.';document.getElementById('roomLabel').innerText='Room closed';try{net.mq.end(true);}catch(e){}}
 function clientRecv(m){if(!m||!m.t)return;
  if(m.t=='lobby'){renderLobby(m.names,m.size);}
  else if(m.t=='full'){nmsg(m.why||'Cannot join this room.');leaveRoom();}
  else if(m.t=='start'){net.me=m.you;netBegin(m);}
- else if(m.t=='roll'||m.t=='move'){m.at=Date.now();netQ.push(m);}
+ else if(m.t=='roll'||m.t=='move'){
+  if(m.s){if(m.s<=net.seqIn)return;if(m.s>net.seqIn+1){net.seqIn=m.s;netQ.length=0;requestSync();return;}net.seqIn=m.s;}
+  m.at=Date.now();netQ.push(m);}
  else if(m.t=='bot'){net.bots[m.c]=true;names[m.c]=names[m.c]+' BOT';setLabel(m.c,names[m.c]);}
+ else if(m.t=='unbot'){net.bots[m.c]=false;if(m.name){names[m.c]=m.name;setLabel(m.c,m.name);}}
  else if(m.t=='snap'){applySnap(m);}
 }
 function requestSync(){var n=Date.now();if(n-lastSyncReq<2000)return;lastSyncReq=n;if(net.conn&&net.conn.open)net.conn.send({t:'reqsync'});}
 function applySnap(m){if(rolling||moving){setTimeout(function(){applySnap(m);},300);return;}
- epoch++;pendNext=false;netQ.length=0;pos=m.pos;turn=m.turn;dice=m.dice;waiting=m.waiting;movable=m.movable;clearGlow();
+ epoch++;pendNext=false;netQ=netQ.filter(function(a){return a.s>(m.s||0);});net.seqIn=Math.max(net.seqIn,m.s||0);pos=m.pos;turn=m.turn;dice=m.dice;waiting=m.waiting;movable=m.movable;clearGlow();
  for(var p=0;p<4;p++)for(var k=0;k<4;k++)updOne(p,k);updStat();
  var all=document.querySelectorAll('.score div');for(var i=0;i<all.length;i++)all[i].classList.remove('on2');document.getElementById('p'+turn).classList.add('on2');updDice();
  if(waiting&&isMine(turn))for(var q=0;q<movable.length;q++)tokens[turn][movable[q]].classList.add('go');
@@ -384,8 +437,8 @@ function netPump(){
   var ok=(r.t=='roll')?(!rolling&&!moving&&!waiting&&!pendNext&&turn==r.p):(waiting&&!rolling&&!moving&&turn==r.p&&movable.indexOf(r.k)!=-1);
   if(!ok){if(Date.now()-r.at>1500)reqQ.shift();return;}
   reqQ.shift();
-  if(r.t=='roll'){var v=rollValue(r.p);netSend({t:'roll',p:r.p,v:v,h:stHash()});startRoll(r.p,v);}
-  else{netSend({t:'move',k:r.k,h:stHash()});doMove(r.k);}
+  if(r.t=='roll'){var v=rollValue(r.p);netSend({t:'roll',p:r.p,v:v,h:stHash(),s:++net.seq});startRoll(r.p,v);}
+  else{netSend({t:'move',k:r.k,h:stHash(),s:++net.seq});doMove(r.k);}
  }else{var m=netQ[0];if(!m)return;
   var okc=(m.t=='roll')?(!rolling&&!moving&&!waiting&&!pendNext&&turn==m.p):(waiting&&!rolling&&!moving);
   if(!okc){if(Date.now()-m.at>6000){netQ.length=0;requestSync();}return;}
